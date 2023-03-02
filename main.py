@@ -105,11 +105,12 @@ def download(args):
             return
     
     for i, file in enumerate(filelist):
-        
-        file_url = 'https://cloud.tsinghua.edu.cn/d/{}/files/?p={}'.format(args.share_key, file["file_path"])
         #for image file
         if(file["file_path"].split('.')[-1] in ['jpg', 'png', 'jpeg', 'bmp', 'gif']):
+            file_url = 'https://cloud.tsinghua.edu.cn/d/{}/files/?p={}'.format(args.share_key, file["file_path"])
             file_url = get_img_url(file_url)
+        else:
+             file_url = 'https://cloud.tsinghua.edu.cn/d/{}/files/?p={}&dl=1'.format(args.share_key, file["file_path"])
 
         save_path = os.path.join(args.save, file["file_path"][1:])
         save_dir = os.path.dirname(save_path)
