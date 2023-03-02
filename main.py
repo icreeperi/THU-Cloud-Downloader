@@ -77,6 +77,13 @@ def download_single_file(url: str, fname: str):
             size = file.write(data)
             bar.update(size)
 
+def get_img_url(file_url):
+    response = requests.get(file_url)
+    html = response.content.decode('utf-8')
+    pattern = re.compile(r'(?<=rawPath: \')([^\n\r\']+)')
+    file_url = pattern.search(html).group(0).encode().decode('unicode_escape')
+    return file_url
+
 def download(args):
     get_share_key(args)
     verify_password(args.password, args.share_key)
@@ -98,7 +105,12 @@ def download(args):
             return
     
     for i, file in enumerate(filelist):
-        file_url = 'https://cloud.tsinghua.edu.cn/d/{}/files/?p={}&dl=1'.format(args.share_key, file["file_path"])
+        
+        file_url = 'https://cloud.tsinghua.edu.cn/d/{}/files/?p={}'.format(args.share_key, file["file_path"])
+        #for image file
+        if(file["file_path"].split('.')[-1] in ['jpg', 'png', 'jpeg', 'bmp', 'gif']):
+            file_url = get_img_url(file_url)
+
         save_path = os.path.join(args.save, file["file_path"][1:])
         save_dir = os.path.dirname(save_path)
         if not os.path.exists(save_dir):
