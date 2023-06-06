@@ -39,7 +39,7 @@ def verify_password(pwd: str, share_key: str):
                   data={"csrfmiddlewaretoken": csrfmiddlewaretoken, 
                         "token": share_key, "password": pwd},
                   headers={"Referer": f"https://cloud.tsinghua.edu.cn/d/{share_key}/"})
-    # print(r.text)
+    #print(r.text)
     if "Please enter a correct password" in r.text:
         raise ValueError("Couldn't download files, please check your password.")
     elif "Please enter the password" in r.text:
@@ -77,11 +77,16 @@ def download_single_file(url: str, fname: str):
             size = file.write(data)
             bar.update(size)
 
-def get_img_url(file_url):
-    response = requests.get(file_url)
+def get_raw_url(file_url):
+    response = sess.get(file_url)
     html = response.content.decode('utf-8')
     pattern = re.compile(r'(?<=rawPath: \')([^\n\r\']+)')
-    file_url = pattern.search(html).group(0).encode().decode('unicode_escape')
+     #useless
+        #pattern = re.compile(r'<video.*?src=[\'\"](.*?)[\'\"].*?>')
+    try:
+        file_url = pattern.search(html).group(0).encode().decode('unicode_escape')
+    except:
+        raise ValueError("Couldn't find files")
     return file_url
 
 def download(args):
@@ -104,14 +109,19 @@ def download(args):
         elif key == 'n':
             return
     
+    image_file_list = ['jpg', 'png', 'jpeg', 'bmp', 'gif']
+    video_file_list = ['mp4', 'avi', 'mkv', 'mov', 'flv', 'rmvb', 'wmv']
+
     for i, file in enumerate(filelist):
-        #for image file
-        if(file["file_path"].split('.')[-1] in ['jpg', 'png', 'jpeg', 'bmp', 'gif']):
+        #for certain file type:
+        if(file["file_path"].split('.')[-1] in image_file_list + video_file_list):
             file_url = 'https://cloud.tsinghua.edu.cn/d/{}/files/?p={}'.format(args.share_key, file["file_path"])
-            file_url = get_img_url(file_url)
+            file_url = get_raw_url(file_url)
         else:
              file_url = 'https://cloud.tsinghua.edu.cn/d/{}/files/?p={}&dl=1'.format(args.share_key, file["file_path"])
 
+        #print(file_url)
+        
         save_path = os.path.join(args.save, file["file_path"][1:])
         save_dir = os.path.dirname(save_path)
         if not os.path.exists(save_dir):
